@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from o2 import Tariff, CallType
 
 class BasePage(object):
 
@@ -32,12 +33,14 @@ class InternationalTariffsPage(BasePage):
         elem = self.find_element(*self.country_text_input).send_keys(country)
         elem.send_keys(Keys.ENTER)
 
-    def select_tariff_type(self, tariff_type="pay_monthly"):
-        if tariff_type == "pay_monthly":
+    def select_tariff_type(self, tariff_type=Tariff.PAY_MONTHLY):
+        if tariff_type is Tariff.PAY_MONTHLY:
             loc = self.pay_monthly_button
-        elif tariff_type == "pay_and_go":
+        elif tariff_type is Tariff.PAY_AND_GO:
             loc = self.pay_and_go_button 
         self.find_element(*loc).click()
+
+    
 
     
 
