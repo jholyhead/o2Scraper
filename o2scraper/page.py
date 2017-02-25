@@ -1,6 +1,9 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from o2 import Tariff, CallType
+import time
 
 class BasePage(object):
 
@@ -27,7 +30,8 @@ class InternationalTariffsPage(BasePage):
     country_text_input = (By.ID, "countryName")
     pay_monthly_button = (By.ID, "paymonthly")
     pay_and_go_button = (By.ID, "payandgo")
-    tariffs_table = (By.ID, "standardRatesTable")
+    pay_monthly_tariffs_table = (By.CSS_SELECTOR, "#paymonthlyTariffPlan #standardRatesTable")
+    pay_and_go_tariffs_table = (By.CSS_SELECTOR, "#payandgoTariffPlan #standardRatesTable")
 
     def __init__(self, driver):
         BasePage.__init__(self, driver)
@@ -45,8 +49,18 @@ class InternationalTariffsPage(BasePage):
             loc = self.pay_and_go_button 
         self.find_element(*loc).click()
 
-    def get_rate(self, call_type=CallType.LANDLINE):
-        rates_table = self.find_element(*self.tariffs_table)
+    def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
+
+        #we need to identify the rates table based on tariff
+        if tariff_type is Tariff.PAY_MONTHLY:
+            loc = self.pay_monthly_tariffs_table
+        elif tariff_type is Tariff.PAY_AND_GO:
+            loc = self.pay_and_go_tariffs_table
+        #we introduce an explicit wait to ensure that the rate details 
+        #have been inserted into the rates table
+        WebDriverWait(self.driver, 5).until(
+            EC.text_to_be_present_in_element(loc, call_type.value))        
+        rates_table = self.find_element(*loc)
         rates_rows = rates_table.find_elements(*(By.TAG_NAME, "tr"))
         rate = ""
         for row in rates_rows:
