@@ -1,10 +1,18 @@
 from enum import Enum
 
-class Tariff(Enum):
+class BaseEnum(Enum):
+
+    @classmethod
+    def from_string(cls, str):
+        return getattr(cls, str.upper(), None)
+
+class Tariff(BaseEnum):
     PAY_MONTHLY = 1
     PAY_AND_GO = 2
 
-class CallType(Enum):
+class CallType(BaseEnum):
     LANDLINE = "Landline"
     MOBILE = "Mobiles"
-    TEXT_MESSAGE = "Cost per text message"
+    TEXT = "Cost per text message"
+
+    
