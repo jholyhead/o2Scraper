@@ -46,8 +46,9 @@ if __name__ == "__main__":
         driver = webdriver.PhantomJS()
         driver.implicitly_wait(2)
         for country, tariff, method in product(countries, tariffs, methods):
-            print(run(country, tariff, method))
+            print(run(driver, country, tariff, method))
     except:
         print("An unexpected error occurred. Exiting")
+        raise
     finally:
         driver.quit()
