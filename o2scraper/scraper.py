@@ -6,8 +6,6 @@ from o2 import Tariff, CallType
 
 def run(driver, country, tariff, method):
     #try:
-        url = "http://international.o2.co.uk/internationaltariffs/calling_abroad_from_uk"
-
         
         tariff_page = InternationalTariffsPage(driver)
         tariff_page.go_to()
@@ -34,8 +32,7 @@ def get_args():
     parser.add_argument("-m", "--method", dest="methods", choices=["landline", "mobile", "text"],
                         nargs="+", default=["landline"], 
                         help="The communication method desired. One or more of 'landline', 'mobile', \
-                        or 'text'")
-    
+                        or 'text'")    
     args = parser.parse_args()
     countries = args.countries
     tariffs = [Tariff.from_string(v) for v in args.tariffs]
@@ -46,7 +43,6 @@ def get_args():
 if __name__ == "__main__":
     try:
         countries, tariffs, methods = get_args()
-
         driver = webdriver.PhantomJS()
         driver.implicitly_wait(2)
         for country, tariff, method in product(countries, tariffs, methods):
@@ -55,4 +51,3 @@ if __name__ == "__main__":
         print("An unexpected error occurred. Exiting")
     finally:
         driver.quit()
-    #run("Canada")
