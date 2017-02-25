@@ -49,9 +49,8 @@ class InternationalTariffsPage(BasePage):
             loc = self.pay_and_go_button 
         self.find_element(*loc).click()
 
-    def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
-
-        #we need to identify the rates table based on tariff
+    def get_rates_table(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
+        """Get the tariff table, based on tariff parameter"""
         if tariff_type is Tariff.PAY_MONTHLY:
             loc = self.pay_monthly_tariffs_table
         elif tariff_type is Tariff.PAY_AND_GO:
@@ -61,6 +60,11 @@ class InternationalTariffsPage(BasePage):
         WebDriverWait(self.driver, 5).until(
             EC.text_to_be_present_in_element(loc, call_type.value))        
         rates_table = self.find_element(*loc)
+        return rates_table
+
+    def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
+        
+        rates_table = self.get_rates_table(tariff_type, call_type)
         rates_rows = rates_table.find_elements(*(By.TAG_NAME, "tr"))
         rate = ""
         for row in rates_rows:
