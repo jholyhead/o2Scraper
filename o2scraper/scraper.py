@@ -1,24 +1,23 @@
+import sys
 from selenium import webdriver
 import argparse
 from page import InternationalTariffsPage
 from itertools import product
+import logging
 from o2 import Tariff, CallType
 
 def run(driver, country, tariff, method):
-    #try:
-        
-        tariff_page = InternationalTariffsPage(driver)
-        tariff_page.go_to()
-        tariff_page.search_for_country(country)
-        tariff_page.select_tariff_type(tariff)
-        rate = tariff_page.get_rate(tariff, method)
-        
-        return "The cost of contacting {} via {} on a {} plan is {}".format(country, method.name.lower(), 
-                                                                            tariff.name.lower(), rate)
-    #except:
-     #   driver.save_screenshot("screen.png")
-      #  driver.quit()
 
+    tariff_page = InternationalTariffsPage(driver)
+    tariff_page.go_to()
+    tariff_page.search_for_country(country)
+    tariff_page.select_tariff_type(tariff)
+    rate = tariff_page.get_rate(tariff, method)
+    if not rate:
+        return "Rate could not be found for {} in {} on {} contract".format(country, 
+                                            method.name.lower(), tariff.name.lower())
+    return "The cost of contacting {} via {} on a {} plan is {}".format(country, 
+                                        method.name.lower(), tariff.name.lower(), rate)
 
 def get_args():
     parser = argparse.ArgumentParser(description='TODO')
@@ -31,24 +30,38 @@ def get_args():
                         Defaults to 'pay_monthly'")
     parser.add_argument("-m", "--method", dest="methods", choices=["landline", "mobile", "text"],
                         nargs="+", default=["landline"], 
-                        help="The communication method desired. One or more of 'landline', 'mobile', \
-                        or 'text'")    
+                        help="The communication method desired. One or more of 'landline',\
+                         'mobile', or 'text'")    
     args = parser.parse_args()
     countries = args.countries
     tariffs = [Tariff.from_string(v) for v in args.tariffs]
     methods = [CallType.from_string(v) for v in args.methods]
     return (countries, tariffs, methods)
 
+def setup_logging():
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename='scraper.log',
+                        filemode='a')
+
+def get_driver():
+    driver = webdriver.PhantomJS()
+    driver.implicitly_wait(2)
+    return driver
 
 if __name__ == "__main__":
     try:
+        driver = get_driver()
+        setup_logging()
         countries, tariffs, methods = get_args()
-        driver = webdriver.PhantomJS()
-        driver.implicitly_wait(2)
+        logging.info("Starting with args: Countries: {}, Tariffs: {}, Methods: {}"
+                    .format(countries, [t.name.lower() for t  in tariffs], 
+                            [m.name.lower() for m in methods]))                
         for country, tariff, method in product(countries, tariffs, methods):
             print(run(driver, country, tariff, method))
+        logging.info("Completed without errors")
     except:
-        print("An unexpected error occurred. Exiting")
+        print("An error occurred. Check log for details. Exiting")
         raise
-    finally:
-        driver.quit()
+    driver.quit()
+        
