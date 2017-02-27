@@ -1,14 +1,21 @@
 import sys
-from selenium import webdriver
 import argparse
-from page import InternationalTariffsPage
+from o2scraper.page import InternationalTariffsPage
 from itertools import product
 import logging
-from o2 import Tariff, CallType
+from o2scraper.o2 import Tariff, CallType
+from driver import driver
 
-def run(driver, country, tariff, method):
+def get_driver():
+    driver.implicitly_wait(2)
+    return driver
 
-    tariff_page = InternationalTariffsPage(driver)
+def get_tariff_page():
+    return InternationalTariffsPage(get_driver())
+
+def run(country, tariff=Tariff.PAY_MONTHLY, method=CallType.LANDLINE, 
+        tariff_page=get_tariff_page()):
+
     tariff_page.go_to()
     tariff_page.search_for_country(country)
     tariff_page.select_tariff_type(tariff)
@@ -25,7 +32,7 @@ def get_args():
                         default=["Canada", "Germany", "Iceland", "Pakistan", "Singapore", "South Africa"],
                         help="List of Countries to query")
     parser.add_argument("-t", "--tariffTypes", dest="tariffs", choices=["pay_monthly", "pay_and_go"],
-                        nargs="+", default=["pay_and_go"],
+                        nargs="+", default=["pay_monthly"],
                         help="The tariff types, one or more of 'pay_monthly' or 'pay_and go').\
                         Defaults to 'pay_monthly'")
     parser.add_argument("-m", "--method", dest="methods", choices=["landline", "mobile", "text"],
@@ -44,24 +51,19 @@ def setup_logging():
                         filename='scraper.log',
                         filemode='a')
 
-def get_driver():
-    driver = webdriver.PhantomJS()
-    driver.implicitly_wait(2)
-    return driver
+
 
 if __name__ == "__main__":
     try:
-        driver = get_driver()
         setup_logging()
         countries, tariffs, methods = get_args()
         logging.info("Starting with args: Countries: {}, Tariffs: {}, Methods: {}"
                     .format(countries, [t.name.lower() for t  in tariffs], 
                             [m.name.lower() for m in methods]))                
         for country, tariff, method in product(countries, tariffs, methods):
-            print(run(driver, country, tariff, method))
+            print(run(country, tariff, method))
         logging.info("Completed without errors")
     except:
         print("An error occurred. Check log for details. Exiting")
-        raise
-    driver.quit()
-        
+    finally:
+        driver.close()      
