@@ -7,15 +7,17 @@ from o2scraper.o2 import Tariff, CallType
 from driver import driver
 
 def get_driver():
+    """Returns a webdriver object with a 2 second implicit wait"""
     driver.implicitly_wait(2)
     return driver
 
 def get_tariff_page():
+    """Returns an instanciation of the InternationalTariffsPage Class"""
     return InternationalTariffsPage(get_driver())
 
 def run(country, tariff=Tariff.PAY_MONTHLY, method=CallType.LANDLINE, 
         tariff_page=get_tariff_page()):
-
+    """Run the scraper, takes a single country, tariff type and method"""
     tariff_page.go_to()
     tariff_page.search_for_country(country)
     tariff_page.select_tariff_type(tariff)
@@ -27,6 +29,7 @@ def run(country, tariff=Tariff.PAY_MONTHLY, method=CallType.LANDLINE,
                                         method.name.lower(), tariff.name.lower(), rate)
 
 def get_args():
+    """Set up Argument Parser"""
     parser = argparse.ArgumentParser(description='A simple webscraper for pulling international \
                     charges from the O2 website.')
     parser.add_argument("-c", "--countries", dest="countries", nargs="+",
@@ -47,6 +50,7 @@ def get_args():
     return (countries, tariffs, methods)
 
 def setup_logging():
+    """Set up a log file"""
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s',
                         filename='scraper.log',

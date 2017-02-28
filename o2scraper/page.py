@@ -9,6 +9,9 @@ import logging
 class BasePage(object):
 
     def __init__(self, driver):
+        """Base Page Class. Superclass that all pages should inherit from. Holds
+        a number of helper methods that will simplify finding page elements
+        """
         self.driver = driver
     
     @property
@@ -16,6 +19,9 @@ class BasePage(object):
         return self.driver.title
 
     def find_element(self, *loc):
+        """Find an element (singular). The loc argument should be a tuple of
+        location type and the locator string. For example (By.ID, "anElementID")
+        """
         try:
             elem = self.driver.find_element(*loc)
             return elem
@@ -24,9 +30,13 @@ class BasePage(object):
             raise 
     
     def find_elements(self, *loc):
+        """Find an element (singular). The loc argument should be a tuple of
+        location type and the locator string. For example (By.TAGNAME, "tr")
+        """
         return self.driver.find_elements(*loc)
     
     def open_page(self, url):
+        """Open the url"""
         self.driver.get(url)
 
 class InternationalTariffsPage(BasePage):
@@ -42,9 +52,12 @@ class InternationalTariffsPage(BasePage):
         Tariff.PAY_AND_GO: (By.CSS_SELECTOR, "#payandgoTariffPlan #standardRatesTable")}
     
     def __init__(self, driver):
+        """Page model for the International Tariffs Page of the O2 website."""
         BasePage.__init__(self, driver)
 
     def go_to(self):
+        """Attempts to open the page url. Asserts that the page title matches the 
+        expected string"""
         try:
             self.open_page(self.url)
             assert self.title == self.expected_title
@@ -53,9 +66,11 @@ class InternationalTariffsPage(BasePage):
             raise AssertionError
 
     def search_for_country(self, country):
+        """Enter the country name into the country search box"""
         self.find_element(*self.country_text_input).send_keys(country + Keys.ENTER)
 
     def select_tariff_type(self, tariff_type=Tariff.PAY_MONTHLY):
+        """Depending on the tariff type, click the appropriate button """
         _loc = self.tariff_buttons[tariff_type] 
         self.find_element(*_loc).click()
 
@@ -74,6 +89,9 @@ class InternationalTariffsPage(BasePage):
             raise
 
     def get_rates(self, rates_table):
+        """Collect all of the rates stored in the rates table by iterating
+        over the rows and extracting the td tags
+        """
         rates_rows = rates_table.find_elements(*(By.TAG_NAME, "tr"))
         rates = []
         for row in rates_rows:
@@ -82,6 +100,9 @@ class InternationalTariffsPage(BasePage):
         return rates
 
     def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
+        """Iterate over a collection of rates, identify the desired one
+        and return it. 
+         """
         rates_table = self.get_rates_table(tariff_type, call_type)
         rates = self.get_rates(rates_table)
         rate = ""
