@@ -26,6 +26,13 @@ To install packages using pip
 ~~~~
 pip3 install -r requirements.txt
 ~~~~
+
+To install the o2scraper packages
+
+~~~~
+python3 setup.py install
+~~~~
+
 ## Usage
 In order to execute the script to fulfil the requirements of the spec, simply call scraper.py
 
