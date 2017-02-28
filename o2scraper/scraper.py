@@ -27,7 +27,8 @@ def run(country, tariff=Tariff.PAY_MONTHLY, method=CallType.LANDLINE,
                                         method.name.lower(), tariff.name.lower(), rate)
 
 def get_args():
-    parser = argparse.ArgumentParser(description='TODO')
+    parser = argparse.ArgumentParser(description='A simple webscraper for pulling international \
+                    charges from the O2 website.')
     parser.add_argument("-c", "--countries", dest="countries", nargs="+",
                         default=["Canada", "Germany", "Iceland", "Pakistan", "Singapore", "South Africa"],
                         help="List of Countries to query")
