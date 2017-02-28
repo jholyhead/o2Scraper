@@ -42,7 +42,9 @@ python3 scraper.py
 
 There are a number of command line options to change the functionality of the script.
 
-| -c 	| --countries  	| List of Countries to query                                                   
+| 	|  	|                                                               	|
+|----	|--------------	|--------------------------------------------------------------------------------------------	|
+| -c 	| --countries  	| List of Countries to query                                         	|
 | -t 	| --tariffType 	| The tariff types, one or more of 'pay_monthly' or 'pay_and go'). Defaults to 'pay_monthly' 	|
 | -m 	| --methods    	| The communication method desired. One or more of 'landline', 'mobile', or 'text'           	|
 |    	|              	|                                                                                            	|
