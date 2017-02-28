@@ -24,7 +24,7 @@ npm -g install phantomjs
 To install packages using pip
 
 ~~~~
-pip3 install -r /path/to/requirements.txt
+pip3 install -r requirements.txt
 ~~~~
 ## Usage
 In order to execute the script to fulfil the requirements of the spec, simply call scraper.py
