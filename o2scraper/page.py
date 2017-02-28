@@ -2,8 +2,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from o2 import Tariff, CallType
-import time
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from o2scraper.o2 import Tariff, CallType
+import logging
 
 class BasePage(object):
 
@@ -15,7 +16,12 @@ class BasePage(object):
         return self.driver.title
 
     def find_element(self, *loc):
-        return self.driver.find_element(*loc)
+        try:
+            elem = self.driver.find_element(*loc)
+            return elem
+        except NoSuchElementException:
+            logging.error("We couldn't find the element {}".format(loc))
+            raise 
     
     def find_elements(self, *loc):
         return self.driver.find_elements(*loc)
@@ -26,55 +32,62 @@ class BasePage(object):
 class InternationalTariffsPage(BasePage):
 
     url = "http://international.o2.co.uk/internationaltariffs/calling_abroad_from_uk"
+    expected_title = "O2 | International | International Caller Bolt On"
 
     country_text_input = (By.ID, "countryName")
-    pay_monthly_button = (By.ID, "paymonthly")
-    pay_and_go_button = (By.ID, "payandgo")
-    pay_monthly_tariffs_table = (By.CSS_SELECTOR, "#paymonthlyTariffPlan #standardRatesTable")
-    pay_and_go_tariffs_table = (By.CSS_SELECTOR, "#payandgoTariffPlan #standardRatesTable")
-
+    tariff_buttons = {Tariff.PAY_MONTHLY: (By.ID, "paymonthly"), 
+                      Tariff.PAY_AND_GO: (By.ID, "payandgo")}
+    tariff_tables = {
+        Tariff.PAY_MONTHLY: (By.CSS_SELECTOR, "#paymonthlyTariffPlan #standardRatesTable"),
+        Tariff.PAY_AND_GO: (By.CSS_SELECTOR, "#payandgoTariffPlan #standardRatesTable")}
+    
     def __init__(self, driver):
         BasePage.__init__(self, driver)
 
     def go_to(self):
-        self.open_page(self.url)
+        try:
+            self.open_page(self.url)
+            assert self.title == self.expected_title
+        except AssertionError:
+            print("ERROR: Page hasn't loaded correctly; title is different than expected")
+            raise AssertionError
 
     def search_for_country(self, country):
-        elem = self.find_element(*self.country_text_input).send_keys(country + Keys.ENTER)
+        self.find_element(*self.country_text_input).send_keys(country + Keys.ENTER)
 
     def select_tariff_type(self, tariff_type=Tariff.PAY_MONTHLY):
-        if tariff_type is Tariff.PAY_MONTHLY:
-            loc = self.pay_monthly_button
-        elif tariff_type is Tariff.PAY_AND_GO:
-            loc = self.pay_and_go_button 
-        self.find_element(*loc).click()
+        _loc = self.tariff_buttons[tariff_type] 
+        self.find_element(*_loc).click()
 
     def get_rates_table(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
         """Get the tariff table, based on tariff parameter"""
-        if tariff_type is Tariff.PAY_MONTHLY:
-            loc = self.pay_monthly_tariffs_table
-        elif tariff_type is Tariff.PAY_AND_GO:
-            loc = self.pay_and_go_tariffs_table
+        _loc = self.tariff_tables[tariff_type]
         #we introduce an explicit wait to ensure that the rate details 
         #have been inserted into the rates table
-        WebDriverWait(self.driver, 5).until(
-            EC.text_to_be_present_in_element(loc, call_type.value))        
-        rates_table = self.find_element(*loc)
-        return rates_table
+        try:
+            WebDriverWait(self.driver, 5).until(
+                EC.text_to_be_present_in_element(_loc, call_type.value))        
+            rates_table = self.find_element(*_loc)
+            return rates_table
+        except TimeoutException:
+            logging.error("Rates table did not load data in time")
+            raise
 
-    def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
-        
-        rates_table = self.get_rates_table(tariff_type, call_type)
+    def get_rates(self, rates_table):
         rates_rows = rates_table.find_elements(*(By.TAG_NAME, "tr"))
-        rate = ""
+        rates = []
         for row in rates_rows:
             cells = row.find_elements(*(By.TAG_NAME, "td"))
-            if cells[0].text == call_type.value:
-                rate = cells[1].text
+            rates.append((cells[0].text, cells[1].text))
+        return rates
+
+    def get_rate(self, tariff_type=Tariff.PAY_MONTHLY, call_type=CallType.LANDLINE):
+        rates_table = self.get_rates_table(tariff_type, call_type)
+        rates = self.get_rates(rates_table)
+        rate = ""
+        for r in rates:
+            if r[0] == call_type.value:
+                rate = r[1]
         return rate
 
     
-
-    
-
-
